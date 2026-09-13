@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="hosts-wrap">
+  <h1>{{ t.register.view_list }}</h1>
+
+  {% if hosts %}
+  <table class="hosts-table">
+    <thead>
+      <tr>
+        <th>{{ t.register.field_family_name }}</th>
+        <th>{{ t.register.field_aoul }}</th>
+        <th>{{ t.register.field_phone }}</th>
+        <th>{{ t.register.field_guests }}</th>
+        <th>{{ t.register.field_rooms }}</th>
+        <th>{{ t.register.field_meals }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for h in hosts %}
+      <tr>
+        <td>{{ h.family_name }}</td>
+        <td>{{ h.aoul }}</td>
+        <td>{{ h.phone }}</td>
+        <td>{{ h.guests }}</td>
+        <td>{{ h.rooms }}</td>
+        <td>{{ h.meals }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="empty-note">
+      {% if lang == 'ru' %}Пока никто не зарегистрировался.
+      {% elif lang == 'kk' %}Әзірге ешкім тіркелген жоқ.
+      {% else %}No families registered yet.{% endif %}
+    </p>
+  {% endif %}
+
+  <a class="back-link" href="{{ url_for('index') }}">&larr; {{ t.register.back_home }}</a>
+</div>
+{% endblock %}

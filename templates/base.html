@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ata Joly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="{{ url_for('index') }}" class="brand">Ata <span>Joly</span></a>
+    <div class="navlinks">
+      <a href="{{ url_for('index') }}#concept">{{ t.nav.concept }}</a>
+      <a href="{{ url_for('index') }}#route">{{ t.nav.route }}</a>
+      <a href="{{ url_for('index') }}#itinerary">{{ t.nav.itinerary }}</a>
+      <a href="{{ url_for('index') }}#villages">{{ t.nav.villages }}</a>
+      <a href="{{ url_for('index') }}#practical">{{ t.nav.practical }}</a>
+    </div>
+    <div class="navright">
+      <div class="langswitch">
+        {% for code in languages %}
+          <a href="{{ url_for('set_lang', lang_code=code) }}" class="{{ 'active' if code == lang else '' }}">{{ all_t[code].lang_label }}</a>
+        {% endfor %}
+      </div>
+      <a class="navcta" href="{{ url_for('register') }}">{{ t.nav.register_host }}</a>
+    </div>
+  </div>
+</nav>
+
+{% block content %}{% endblock %}
+
+<footer>
+  <div class="wrap">
+    <div>{{ t.footer.left }}</div>
+    <div>{{ t.footer.right }}</div>
+  </div>
+</footer>
+
+</body>
+</html>

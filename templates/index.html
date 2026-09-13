@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block content %}
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-eyebrow">{{ t.hero.eyebrow }}</div>
+    <h1>{{ t.hero.title_1 }}<br>{{ t.hero.title_2_pre }}<em>{{ t.hero.title_2_em }}</em>{{ t.hero.title_2_post }}</h1>
+    <p class="hero-sub">{{ t.hero.sub }}</p>
+    <div class="hero-meta">
+      {% for value, label in t.hero.meta %}
+        <div><strong>{{ value }}</strong>{{ label }}</div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="strata">
+    <svg viewBox="0 0 1200 220" preserveAspectRatio="none">
+      <path d="M0,220 L0,140 L120,90 L220,150 L340,60 L430,130 L520,40 L640,120 L760,70 L880,150 L980,95 L1100,140 L1200,100 L1200,220 Z" fill="#D8C79E"/>
+      <path d="M0,220 L0,175 L150,150 L260,190 L400,130 L540,180 L660,120 L800,175 L920,150 L1050,190 L1200,160 L1200,220 Z" fill="#C4AE7E"/>
+      <path d="M0,220 L0,205 L200,195 L380,210 L560,190 L760,208 L960,195 L1200,206 L1200,220 Z" fill="#AE9560"/>
+    </svg>
+  </div>
+</header>
+
+<section class="concept section" id="concept">
+  <div class="wrap concept-grid">
+    <div>
+      <p>{{ t.concept.p1 }}</p>
+      <p>{{ t.concept.p2 }}</p>
+    </div>
+    <div class="concept-list">
+      {% for title, desc in t.concept.points %}
+        <div class="item"><h3>{{ title }}</h3><p>{{ desc }}</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="route section-tight" id="route">
+  <div class="wrap">
+    <div class="head-row">
+      <h2>{{ t.route.heading }}</h2>
+      <p>{{ t.route.sub }}</p>
+    </div>
+    <div class="route-line">
+      <div class="route-stops">
+        {% for day, place, note in t.route.stops %}
+          <div class="stop"><div class="day">{{ day }}</div><div class="place">{{ place }}</div><div class="note">{{ note }}</div></div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="itinerary">
+  <div class="wrap">
+    <div class="head-row">
+      <h2>{{ t.itinerary.heading }}</h2>
+      <p>{{ t.itinerary.sub }}</p>
+    </div>
+
+    {% for day in t.itinerary.days %}
+    <div class="day-block">
+      <div class="day-side">
+        <div class="day-num">{{ day.num }}</div>
+        <div class="day-title">{{ day.title }}</div>
+        <div class="day-tag">{{ day.tag }}</div>
+        <div class="scene {{ day.gradient }}"></div>
+      </div>
+      <div class="schedule">
+        {% for time, what in day.schedule %}
+          <div class="slot"><div class="time">{{ time }}</div><div class="what">{{ what | safe }}</div></div>
+        {% endfor %}
+      </div>
+      {% if day.overnight %}
+        <div class="overnight" style="grid-column:2;">{{ day.overnight }}</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+
+  </div>
+</section>
+
+<section class="villages section" id="villages">
+  <div class="wrap">
+    <div class="head-row">
+      <h2>{{ t.villages.heading }}</h2>
+      <p>{{ t.villages.sub }}</p>
+    </div>
+    <div class="model-grid">
+      {% for pct, title, desc in t.villages.cards %}
+        <div class="model-card"><div class="pct">{{ pct }}</div><h3>{{ title }}</h3><p>{{ desc }}</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section" id="highlights">
+  <div class="wrap">
+    <div class="head-row">
+      <h2>{{ t.highlights.heading }}</h2>
+      <p>{{ t.highlights.sub }}</p>
+    </div>
+    <div class="highlights">
+      {% for gradient, label in t.highlights.cards %}
+        <div class="hl-card {{ gradient }}"><span>{{ label }}</span></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section-tight" id="practical" style="border-top:1px solid var(--line); border-bottom:1px solid var(--line);">
+  <div class="wrap">
+    <div class="head-row"><h2>{{ t.practical.heading }}</h2><p></p></div>
+    <div class="practical-grid">
+      {% for title, desc in t.practical.rows %}
+        <div class="item"><h3>{{ title }}</h3><p>{{ desc }}</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="cta" id="book">
+  <div class="wrap" style="padding:70px 0;">
+    <h2>{{ t.cta.heading }}</h2>
+    <a class="cta-btn" href="mailto:hello@atajoly.kz">{{ t.cta.button }}</a>
+  </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="register-wrap">
+  <div class="eyebrow">{{ t.register.eyebrow }}</div>
+  <h1>{{ t.register.heading }}</h1>
+  <p class="sub">{{ t.register.sub }}</p>
+
+  {% if success %}
+    <div class="success-box">{{ t.register.success }}</div>
+    <a class="back-link" href="{{ url_for('index') }}">&larr; {{ t.register.back_home }}</a>
+  {% else %}
+
+    {% if error %}
+      <div class="error-msg">
+        {% if lang == 'ru' %}Заполните имя, аул, телефон и подтвердите согласие.
+        {% elif lang == 'kk' %}Атын, ауылды, телефонды толтырыңыз және келісіміңізді растаңыз.
+        {% else %}Please fill in name, aoul, phone, and confirm consent.{% endif %}
+      </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('register') }}">
+      <div class="field">
+        <label for="family_name">{{ t.register.field_family_name }}</label>
+        <input type="text" id="family_name" name="family_name" required>
+      </div>
+      <div class="field">
+        <label for="aoul">{{ t.register.field_aoul }}</label>
+        <input type="text" id="aoul" name="aoul" required>
+      </div>
+      <div class="field">
+        <label for="phone">{{ t.register.field_phone }}</label>
+        <input type="tel" id="phone" name="phone" required>
+      </div>
+      <div class="field">
+        <label for="guests">{{ t.register.field_guests }}</label>
+        <input type="number" id="guests" name="guests" min="1" max="20">
+      </div>
+      <div class="field">
+        <label for="rooms">{{ t.register.field_rooms }}</label>
+        <textarea id="rooms" name="rooms"></textarea>
+      </div>
+      <div class="field">
+        <label for="meals">{{ t.register.field_meals }}</label>
+        <textarea id="meals" name="meals"></textarea>
+      </div>
+      <div class="field">
+        <label for="extra">{{ t.register.field_extra }}</label>
+        <textarea id="extra" name="extra"></textarea>
+      </div>
+      <div class="checkbox-field">
+        <input type="checkbox" id="consent" name="consent">
+        <label for="consent">{{ t.register.field_consent }}</label>
+      </div>
+      <button type="submit" class="submit-btn">{{ t.register.submit }}</button>
+    </form>
+
+    <a class="back-link" href="{{ url_for('index') }}">&larr; {{ t.register.back_home }}</a>
+    &nbsp; &nbsp;
+    <a class="back-link" href="{{ url_for('hosts_list') }}">{{ t.register.view_list }} &rarr;</a>
+  {% endif %}
+</div>
+{% endblock %}
