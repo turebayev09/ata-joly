@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="hosts-wrap">
+  <h1>{{ t.booking.heading }}</h1>
+
+  <div class="capacity-box" style="margin-bottom:36px;">
+    <div class="capacity-label">{{ t.booking.capacity_label }}</div>
+    <div class="capacity-bar">
+      <div class="capacity-fill" style="width: {{ ((capacity - left) / capacity * 100) | round(0, 'floor') }}%;"></div>
+    </div>
+    {% if left > 0 %}
+      <div class="capacity-text">{{ t.booking.spots_left.format(left=left, total=capacity) }}</div>
+    {% else %}
+      <div class="capacity-text full">{{ t.booking.spots_full }}</div>
+    {% endif %}
+  </div>
+
+  {% if bookings %}
+  <table class="hosts-table">
+    <thead>
+      <tr>
+        <th>{{ t.booking.field_name }}</th>
+        <th>{{ t.booking.field_contact }}</th>
+        <th>{{ t.booking.field_people }}</th>
+        <th>{{ t.booking.field_date }}</th>
+        <th>{{ t.booking.field_message }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for b in bookings %}
+      <tr>
+        <td>{{ b.name }}</td>
+        <td>{{ b.contact }}</td>
+        <td>{{ b.people }}</td>
+        <td>{{ b.preferred_date }}</td>
+        <td>{{ b.message }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="empty-note">
+      {% if lang == 'ru' %}Заявок пока нет.
+      {% elif lang == 'kk' %}Әзірге өтінімдер жоқ.
+      {% else %}No applications yet.{% endif %}
+    </p>
+  {% endif %}
+
+  <a class="back-link" href="{{ url_for('index') }}">&larr; {{ t.booking.back_home }}</a>
+</div>
+{% endblock %}
