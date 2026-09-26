@@ -2,3 +2,10 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# Real submissions contain people's names and phone numbers — never commit these.
+data/*.json
+
+# If you ever use a local .env file for secrets, never commit it either.
+.env
+.env.*

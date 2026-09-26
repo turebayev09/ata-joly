@@ -12,13 +12,20 @@
 
     {% if error %}
       <div class="error-msg">
+        {% if error == 'csrf' %}
+          {% if lang == 'ru' %}Форма устарела, обновите страницу и попробуйте снова.
+          {% elif lang == 'kk' %}Форма ескірді, бетті жаңартып, қайта көріңіз.
+          {% else %}This form expired — please refresh the page and try again.{% endif %}
+        {% else %}
         {% if lang == 'ru' %}Заполните имя, аул, телефон и подтвердите согласие.
         {% elif lang == 'kk' %}Атын, ауылды, телефонды толтырыңыз және келісіміңізді растаңыз.
         {% else %}Please fill in name, aoul, phone, and confirm consent.{% endif %}
+        {% endif %}
       </div>
     {% endif %}
 
     <form method="POST" action="{{ url_for('register') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="field">
         <label for="family_name">{{ t.register.field_family_name }}</label>
         <input type="text" id="family_name" name="family_name" required>

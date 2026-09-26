@@ -38,13 +38,20 @@
 
     {% if error %}
       <div class="error-msg">
+        {% if error == 'csrf' %}
+          {% if lang == 'ru' %}Форма устарела, обновите страницу и попробуйте снова.
+          {% elif lang == 'kk' %}Форма ескірді, бетті жаңартып, қайта көріңіз.
+          {% else %}This form expired — please refresh the page and try again.{% endif %}
+        {% else %}
         {% if lang == 'ru' %}Заполните имя, контакт и укажите число участников больше нуля.
         {% elif lang == 'kk' %}Атын, байланысты толтырыңыз және қатысушылар санын нөлден көп көрсетіңіз.
         {% else %}Please fill in name, contact, and a number of people greater than zero.{% endif %}
+        {% endif %}
       </div>
     {% endif %}
 
     <form method="POST" action="{{ url_for('book') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="field">
         <label for="name">{{ t.booking.field_name }}</label>
         <input type="text" id="name" name="name" required>
