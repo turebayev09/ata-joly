@@ -66,6 +66,10 @@ class DeparturesTest(unittest.TestCase):
             self.assertIn(b"No dates have been announced yet", self.client.get("/book").data)
             self.assertEqual(site.departures(), [])
 
+    def test_proposed_dates_are_configured_when_no_override(self):
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertIn("2027-04-10", [day.isoformat() for day in site.configured_dates()])
+
 
 if __name__ == "__main__":
     unittest.main()

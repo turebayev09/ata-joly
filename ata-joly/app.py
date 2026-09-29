@@ -191,11 +191,18 @@ BOOKINGS_FILE = os.path.join(DATA_DIR, "bookings.json")
 _write_lock = threading.Lock()
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# Announced start dates, managed in Render Environment. Nothing is published
-# until the organiser supplies real dates. Four-day tours end three days later.
+# Proposed start dates in the site's spring/autumn travel seasons, approved as
+# tentative by the organiser. TOUR_DATES in Render can replace this list.
+# Tours last four days, so the last day is three days after the start.
+PLANNED_DEPARTURES = (
+    "2026-10-17,2026-10-24,"
+    "2027-04-10,2027-04-24,2027-05-08"
+)
+
+
 def configured_dates():
     result = set()
-    for raw in os.environ.get("TOUR_DATES", "").split(","):
+    for raw in os.environ.get("TOUR_DATES", PLANNED_DEPARTURES).split(","):
         raw = raw.strip()
         if not raw:
             continue
