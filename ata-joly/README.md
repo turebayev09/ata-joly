@@ -11,6 +11,20 @@ python app.py
 
 Open http://127.0.0.1:5000 in a browser.
 
+## Planned tour dates
+
+The homepage's date button now opens `/dates` with proposed departures:
+17–20 and 24–27 October 2026, 10–13 and 24–27 April 2027,
+and 8–11 May 2027. Edit `PLANNED_DEPARTURES` in `app.py` to change them.
+Past departures are hidden automatically. Choosing a date preselects it on
+the application form; the server rejects dates that are not on the list.
+
+There is deliberately **no public guest count**. Applications are still
+stored in JSON on Render's temporary filesystem and can disappear after a
+restart or redeploy. This page calls dates planned, not confirmed, and does
+not promise availability. To show trustworthy counts and accept real
+bookings, move applications to durable storage first.
+
 Locally you don't need to set anything — the app generates a temporary secret
 key and leaves the admin pages open so you can see them while building.
 **Before deploying, read `SECURITY.md`** — production mode requires three

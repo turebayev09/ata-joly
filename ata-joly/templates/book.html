@@ -19,18 +19,6 @@
     <p class="price-note">{{ t.booking.price_note }}</p>
   </div>
 
-  <div class="capacity-box">
-    <div class="capacity-label">{{ t.booking.capacity_label }}</div>
-    <div class="capacity-bar">
-      <div class="capacity-fill" style="width: {{ ((capacity - left) / capacity * 100) | round(0, 'floor') }}%;"></div>
-    </div>
-    {% if left > 0 %}
-      <div class="capacity-text">{{ t.booking.spots_left.format(left=left, total=capacity) }}</div>
-    {% else %}
-      <div class="capacity-text full">{{ t.booking.spots_full }}</div>
-    {% endif %}
-  </div>
-
   {% if success %}
     <div class="success-box">{{ t.booking.success }}</div>
     <a class="back-link" href="{{ url_for('index') }}">&larr; {{ t.booking.back_home }}</a>
@@ -43,13 +31,12 @@
           {% elif lang == 'kk' %}Форма ескірді, бетті жаңартып, қайта көріңіз.
           {% else %}This form expired — please refresh the page and try again.{% endif %}
         {% else %}
-        {% if lang == 'ru' %}Заполните имя, контакт и укажите число участников больше нуля.
-        {% elif lang == 'kk' %}Атын, байланысты толтырыңыз және қатысушылар санын нөлден көп көрсетіңіз.
-        {% else %}Please fill in name, contact, and a number of people greater than zero.{% endif %}
+        {{ t.dates.invalid_error }}
         {% endif %}
       </div>
     {% endif %}
 
+    {% if departures %}
     <form method="POST" action="{{ url_for('book') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="field">
@@ -66,7 +53,12 @@
       </div>
       <div class="field">
         <label for="preferred_date">{{ t.booking.field_date }}</label>
-        <input type="text" id="preferred_date" name="preferred_date" placeholder="e.g. May 2027">
+        <select id="preferred_date" name="preferred_date" required>
+          <option value="">{{ t.dates.choose }}</option>
+          {% for departure in departures %}
+            <option value="{{ departure.start }}" {% if selected_date == departure.start %}selected{% endif %}>{{ departure.start_label }} — {{ departure.end_label }}</option>
+          {% endfor %}
+        </select>
       </div>
       <div class="field">
         <label for="message">{{ t.booking.field_message }}</label>
@@ -74,8 +66,11 @@
       </div>
       <button type="submit" class="submit-btn">{{ t.booking.submit }}</button>
     </form>
+    {% else %}
+      <div class="dates-empty">{{ t.dates.empty }}</div>
+    {% endif %}
 
-    <a class="back-link" href="{{ url_for('index') }}">&larr; {{ t.booking.back_home }}</a>
+    <a class="back-link" href="{{ url_for('dates') }}">&larr; {{ t.dates.back }}</a>
   {% endif %}
 </div>
 {% endblock %}

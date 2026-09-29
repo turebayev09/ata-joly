@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="dates-page wrap">
+  <div class="eyebrow">{{ t.dates.eyebrow }}</div>
+  <h1>{{ t.dates.heading }}</h1>
+  <p class="dates-intro">{{ t.dates.intro }}</p>
+  {% if departures %}
+  <div class="departure-list">
+    {% for departure in departures %}
+    <article class="departure-card">
+      <div>
+        <div class="departure-tag">{{ t.dates.planned }}</div>
+        <h2><time datetime="{{ departure.start }}">{{ departure.start_label }}</time> — <time datetime="{{ departure.end }}">{{ departure.end_label }}</time></h2>
+        <p>{{ t.dates.duration }}</p>
+      </div>
+      <a class="departure-action" href="{{ url_for('book', date=departure.start) }}">{{ t.dates.apply }}</a>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+    <div class="dates-empty">{{ t.dates.empty }}</div>
+  {% endif %}
+  <p class="dates-note">{{ t.dates.note }}</p>
+  <a class="back-link" href="{{ url_for('index') }}">&larr; {{ t.booking.back_home }}</a>
+</main>
+{% endblock %}
