@@ -23,7 +23,8 @@ import secrets
 import sys
 import threading
 import time
-from datetime import datetime
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from flask import (
     Flask, render_template, request, redirect, url_for, session, abort, Response
@@ -187,7 +188,16 @@ HOSTS_FILE = os.path.join(DATA_DIR, "host_families.json")
 BOOKINGS_FILE = os.path.join(DATA_DIR, "bookings.json")
 _write_lock = threading.Lock()
 
-# Max people on the next departure. Matches the "6-10 guests" the site already advertises.
+# Proposed departures in the site's spring and autumn travel seasons. These
+# are not confirmed tours. Keep the exact start dates here until an admin
+# scheduling interface exists; dates in the past are automatically hidden.
+PLANNED_DEPARTURES = (
+    "2026-10-17", "2026-10-24",
+    "2027-04-10", "2027-04-24", "2027-05-08",
+)
+
+# Max people per application. No public availability count is shown while
+# bookings are in temporary JSON storage on Render.
 GROUP_CAPACITY = 10
 
 # Server-side field length caps, independent of whatever the HTML form allows,
@@ -237,9 +247,14 @@ def save_booking(entry):
     _save(BOOKINGS_FILE, entry)
 
 
-def spots_left():
-    booked = sum(int(b.get("people") or 0) for b in load_bookings())
-    return max(GROUP_CAPACITY - booked, 0)
+def upcoming_departures():
+    today = datetime.now(ZoneInfo("Asia/Aqtau")).date()
+    return [
+        {"start": start, "end": (date.fromisoformat(start) + timedelta(days=3)).isoformat(),
+         "start_label": date.fromisoformat(start).strftime("%d.%m.%Y"),
+         "end_label": (date.fromisoformat(start) + timedelta(days=3)).strftime("%d.%m.%Y")}
+        for start in PLANNED_DEPARTURES if date.fromisoformat(start) > today
+    ]
 
 
 def get_lang():
@@ -269,6 +284,11 @@ def set_lang(lang_code):
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/dates")
+def dates():
+    return render_template("dates.html", departures=upcoming_departures())
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -313,6 +333,12 @@ def register():
 def book():
     error = None
     success = False
+    options = upcoming_departures()
+    selected_date = (request.form.get("preferred_date", "") if request.method == "POST"
+                     else request.args.get("date", ""))
+    valid_dates = {d["start"] for d in options}
+    if request.method == "GET" and selected_date not in valid_dates:
+        selected_date = ""
 
     if request.method == "POST":
         if rate_limited(client_ip()):
@@ -323,12 +349,12 @@ def book():
             name = clamp(request.form.get("name", "").strip(), MAX_SHORT)
             contact = clamp(request.form.get("contact", "").strip(), MAX_SHORT)
             people = request.form.get("people", "").strip()
-            preferred_date = clamp(request.form.get("preferred_date", "").strip(), MAX_SHORT)
+            preferred_date = selected_date
             message = clamp(request.form.get("message", "").strip(), MAX_LONG)
 
             valid_people = people.isdigit() and 0 < int(people) <= GROUP_CAPACITY
 
-            if not (name and contact and valid_people):
+            if not (name and contact and valid_people and preferred_date in valid_dates):
                 error = "required"
             else:
                 save_booking({
@@ -343,7 +369,7 @@ def book():
 
     return render_template(
         "book.html", error=error, success=success,
-        left=spots_left(), capacity=GROUP_CAPACITY,
+        departures=options, selected_date=selected_date, capacity=GROUP_CAPACITY,
     )
 
 
@@ -352,7 +378,6 @@ def book():
 def bookings_list():
     return render_template(
         "bookings_list.html", bookings=load_bookings(),
-        left=spots_left(), capacity=GROUP_CAPACITY,
     )
 
 
