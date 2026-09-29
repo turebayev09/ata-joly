@@ -72,7 +72,7 @@
         {% endfor %}
       </div>
       {% if day.overnight %}
-        <div class="overnight" style="grid-column:2;">{{ day.overnight }}</div>
+        <div class="overnight">{{ day.overnight }}</div>
       {% endif %}
     </div>
     {% endfor %}
@@ -120,7 +120,7 @@
 </section>
 
 <section class="cta" id="book">
-  <div class="wrap" style="padding:70px 0;">
+  <div class="wrap">
     <h2>{{ t.cta.heading }}</h2>
     <a class="cta-btn" href="{{ url_for('dates') }}">{{ t.cta.button }}</a>
   </div>
