@@ -18,6 +18,29 @@ environment variables and will refuse to start without them.
 
 ## What's here
 
+## Upcoming departure dates
+
+The button at the bottom of the homepage opens `/dates`. Until you publish
+dates, it shows an honest empty state instead of invented departures.
+
+1. Provision a persistent PostgreSQL database and set `DATABASE_URL` in Render
+   to its **internal** connection URL. Do not put credentials in GitHub.
+2. Set `TOUR_DATES` in Render to real departure **start** dates, e.g.
+   `2027-03-20,2027-04-10` (replace these examples with your actual dates).
+   The page shows a four-day span from each start date.
+3. Save both variables and wait for the deploy. The `/dates` page lists
+   applications **per departure**; the visitor selects one date in `/book`.
+   The counter counts people whose applications were submitted, not paid or
+   confirmed bookings. No guest names or phone numbers appear publicly.
+4. Old JSON applications are not automatically imported into PostgreSQL and
+   free-tier Render local files can disappear after redeploy. If you need to
+   preserve existing requests, export them privately and arrange a migration
+   before changing storage. Never commit personal data.
+
+Production refuses to boot if `TOUR_DATES` is set but `DATABASE_URL` is absent;
+configure the database first. The host-family form still uses temporary JSON
+storage and should be migrated before relying on it commercially.
+
 - `app.py` — the Flask app: routes for the home page, the host registration form, and a
   read-only list of registered host families.
 - `translations.py` — every piece of text on the site, in English, Russian and Kazakh.

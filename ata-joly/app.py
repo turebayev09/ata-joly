@@ -23,7 +23,10 @@ import secrets
 import sys
 import threading
 import time
-from datetime import datetime
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
+
+import psycopg
 
 from flask import (
     Flask, render_template, request, redirect, url_for, session, abort, Response
@@ -186,6 +189,43 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 HOSTS_FILE = os.path.join(DATA_DIR, "host_families.json")
 BOOKINGS_FILE = os.path.join(DATA_DIR, "bookings.json")
 _write_lock = threading.Lock()
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+# Announced start dates, managed in Render Environment. Nothing is published
+# until the organiser supplies real dates. Four-day tours end three days later.
+def configured_dates():
+    result = set()
+    for raw in os.environ.get("TOUR_DATES", "").split(","):
+        raw = raw.strip()
+        if not raw:
+            continue
+        try:
+            result.add(date.fromisoformat(raw))
+        except ValueError:
+            raise RuntimeError("TOUR_DATES must be comma-separated YYYY-MM-DD dates")
+    return sorted(day for day in result if day > datetime.now(ZoneInfo("Asia/Aqtau")).date())
+
+
+if IS_PRODUCTION and configured_dates() and not DATABASE_URL:
+    sys.exit("Set DATABASE_URL before publishing TOUR_DATES: Render's local JSON files are temporary.")
+
+
+def booking_db():
+    """Use a durable PostgreSQL database when configured; local JSON is dev-only."""
+    db = psycopg.connect(DATABASE_URL)
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS tour_applications (
+            id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            name text NOT NULL,
+            contact text NOT NULL,
+            people integer NOT NULL,
+            departure_date date NOT NULL,
+            message text NOT NULL DEFAULT '',
+            submitted_at timestamptz NOT NULL DEFAULT now()
+        )
+    """)
+    db.commit()
+    return db
 
 # Max people on the next departure. Matches the "6-10 guests" the site already advertises.
 GROUP_CAPACITY = 10
@@ -230,16 +270,65 @@ def save_host(entry):
 
 
 def load_bookings():
+    if DATABASE_URL:
+        with booking_db() as db:
+            return [
+                {"name": name, "contact": contact, "people": people,
+                 "preferred_date": departure.isoformat(), "message": message}
+                for name, contact, people, departure, message in db.execute(
+                    "SELECT name, contact, people, departure_date, message "
+                    "FROM tour_applications ORDER BY submitted_at DESC"
+                ).fetchall()
+            ]
     return _load(BOOKINGS_FILE)
 
 
 def save_booking(entry):
-    _save(BOOKINGS_FILE, entry)
+    if DATABASE_URL:
+        with booking_db() as db:
+            # Serialise reservations across Gunicorn workers so two simultaneous
+            # requests cannot both take the last places.
+            db.execute("LOCK TABLE tour_applications IN EXCLUSIVE MODE")
+            used = db.execute(
+                "SELECT COALESCE(SUM(people), 0) FROM tour_applications "
+                "WHERE departure_date = %s", (entry["preferred_date"],)
+            ).fetchone()[0]
+            if used + entry["people"] > GROUP_CAPACITY:
+                return False
+            db.execute(
+                "INSERT INTO tour_applications "
+                "(name, contact, people, departure_date, message) "
+                "VALUES (%s, %s, %s, %s, %s)",
+                (entry["name"], entry["contact"], entry["people"],
+                 entry["preferred_date"], entry["message"]),
+            )
+        return True
+    # Local development only. Production with published dates requires a DB.
+    with _write_lock:
+        rows = _load(BOOKINGS_FILE)
+        used = sum(int(b.get("people") or 0) for b in rows
+                   if b.get("preferred_date") == entry["preferred_date"])
+        if used + entry["people"] > GROUP_CAPACITY:
+            return False
+        rows.append(entry)
+        with open(BOOKINGS_FILE, "w", encoding="utf-8") as f:
+            json.dump(rows, f, ensure_ascii=False, indent=2)
+    return True
 
 
-def spots_left():
-    booked = sum(int(b.get("people") or 0) for b in load_bookings())
-    return max(GROUP_CAPACITY - booked, 0)
+def departures():
+    dates = configured_dates()
+    if not dates:
+        return []
+    bookings = load_bookings()
+    return [
+        {"start": day.isoformat(),
+         "end": (day + timedelta(days=3)).isoformat(),
+         "applicants": sum(int(b.get("people") or 0) for b in bookings
+                           if b.get("preferred_date") == day.isoformat()),
+         "capacity": GROUP_CAPACITY}
+        for day in dates
+    ]
 
 
 def get_lang():
@@ -269,6 +358,11 @@ def set_lang(lang_code):
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/dates")
+def dates():
+    return render_template("dates.html", departures=departures())
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -313,6 +407,8 @@ def register():
 def book():
     error = None
     success = False
+    options = departures()
+    selected = request.args.get("date", "") if request.method == "GET" else request.form.get("preferred_date", "")
 
     if request.method == "POST":
         if rate_limited(client_ip()):
@@ -323,15 +419,16 @@ def book():
             name = clamp(request.form.get("name", "").strip(), MAX_SHORT)
             contact = clamp(request.form.get("contact", "").strip(), MAX_SHORT)
             people = request.form.get("people", "").strip()
-            preferred_date = clamp(request.form.get("preferred_date", "").strip(), MAX_SHORT)
+            preferred_date = selected.strip()
             message = clamp(request.form.get("message", "").strip(), MAX_LONG)
 
             valid_people = people.isdigit() and 0 < int(people) <= GROUP_CAPACITY
+            selected_departure = next((d for d in options if d["start"] == preferred_date), None)
 
-            if not (name and contact and valid_people):
+            if not (name and contact and valid_people and selected_departure):
                 error = "required"
             else:
-                save_booking({
+                saved = save_booking({
                     "name": name,
                     "contact": contact,
                     "people": int(people),
@@ -339,11 +436,16 @@ def book():
                     "message": message,
                     "submitted_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
                 })
-                success = True
+                if saved:
+                    success = True
+                else:
+                    error = "full"
+                options = departures()
 
     return render_template(
         "book.html", error=error, success=success,
-        left=spots_left(), capacity=GROUP_CAPACITY,
+        departures=[d for d in options if d["applicants"] < d["capacity"]],
+        selected=selected, capacity=GROUP_CAPACITY,
     )
 
 
@@ -352,7 +454,7 @@ def book():
 def bookings_list():
     return render_template(
         "bookings_list.html", bookings=load_bookings(),
-        left=spots_left(), capacity=GROUP_CAPACITY,
+        departures=departures(), capacity=GROUP_CAPACITY,
     )
 
 

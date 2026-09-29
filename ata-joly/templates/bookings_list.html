@@ -3,17 +3,9 @@
 <div class="hosts-wrap">
   <h1>{{ t.booking.heading }}</h1>
 
-  <div class="capacity-box" style="margin-bottom:36px;">
-    <div class="capacity-label">{{ t.booking.capacity_label }}</div>
-    <div class="capacity-bar">
-      <div class="capacity-fill" style="width: {{ ((capacity - left) / capacity * 100) | round(0, 'floor') }}%;"></div>
-    </div>
-    {% if left > 0 %}
-      <div class="capacity-text">{{ t.booking.spots_left.format(left=left, total=capacity) }}</div>
-    {% else %}
-      <div class="capacity-text full">{{ t.booking.spots_full }}</div>
-    {% endif %}
-  </div>
+  {% for departure in departures %}
+    <p class="capacity-text">{{ departure.start }} — {{ t.dates.applicants.format(count=departure.applicants, total=departure.capacity) }}</p>
+  {% endfor %}
 
   {% if bookings %}
   <table class="hosts-table">
